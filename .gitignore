@@ -1,4 +1,5 @@
 *.exe
+*.com
 *.obj
 *.bat
 *.dll
