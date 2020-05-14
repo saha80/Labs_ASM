@@ -10,98 +10,11 @@
           max_input dup(?)
     num_col_min_sum db "number of column with minimum sum:", 0Ah, 0Dh, '$'
 .CODE
+
 include mylib.inc
 
-del_last_two_entered macro
-	putc 08h ; backspace
-	putc 08h ; backspace
-	putc 20h ; space
-	putc 20h ; space
-	putc 08h ; backspace
-	putc 08h ; backspace
-endm
-
-del_if_not_sign_or_digit macro
-	local delete_from_screen, show_entered, is_sign
-	; if( al >= '0' && al <= '9' || al == '-' || al == '+') { show entered }
-	cmp al, '9'
-	ja delete_from_screen
-	cmp al, '0'
-	jb is_sign
-	jmp show_entered
-	is_sign:
-	cmp al, '-'
-	jne delete_from_screen
-	cmp al, '+'
-	jne delete_from_screen
-	delete_from_screen:
-	putc 08h ; backspace
-	putc 20h ; space
-	putc 08h ; backspace
-	show_entered:
-endm
-
-scan_num macro str
-	local L1, skip_entering_space, skip_entering_newl, del_last_two_entered_jmp_L1, skip_label
-	jmp skip_label
-		del_last_two_entered_jmp_L1:
-			int 21h
-			del_last_two_entered
-			jmp L1
-	skip_label:
-	lea di, str
-	mov si, di ; [si] = str_size
-	xor ch, ch
-	mov cl, [di] ; cl = str_size
-	add di, 2 ; skip str_len
-	xor dl, dl; is_has_sign = false
-	L1:
-		mov ah, 01h ; read char with echo
-		int 21h ; al = entered char
-		; if pressed some functional buttons
-		cmp al, 0h
-		je del_last_two_entered_jmp_L1
-		; if backspace was pressed
-		cmp al, 08h 
-		jne skip_entering_space
-			putc 20h ; space
-			putc 08h ; backspace
-			cmp cl, [si] ; cl == str_size
-			je L1
-			dec di
-			inc cl
-			jmp L1
-		skip_entering_space:
-		
-		
-		
-		show_entered:
-		cmp al, '-'
-		je set_is_sign_to_true
-		cmp al, '+'
-		je set_is_sign_to_true
-		jmp skip_setting_is_sign_to_true
-		
-		set_is_sign_to_true:
-		mov dl, 1
-		
-		skip_setting_is_sign_to_true:
-		stosb
-		cmp al, 0Dh ; if enter was pressed
-	loopne L1
-	cmp cl, 0
-	jne skip_entering_newl
-	putc 0Ah
-	skip_entering_newl:
-	mov [di], '$'
-	lodsb ; al = str_size; inc si
-	dec al
-	sub al, cl ; str_size -= 
-	mov [si], al ; [si] = str_len	
-endm
-
 scan_matrix macro mtr, rows, cols, buf
-    local L1, L2
+    local L1, L2, correct_input
     lea di, mtr
 	mov cx, rows
     L1:
@@ -109,12 +22,20 @@ scan_matrix macro mtr, rows, cols, buf
         mov cx, cols
         L2:    
 			push si
-            lea si, buf
+			
+			lea di, buf
             call scan_string
-            pop si
+			
 			lea si, buf
             call stoi
-            mov [bx], dx           
+            cmp dx, 0
+			jne correct_input
+			pop dx 
+			cmp dx, 0
+			je reenter_num
+			correct_input:
+			mov [bx], dx  
+			pop dx
         loop L2
         pop cx
     loop L1         
