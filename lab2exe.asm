@@ -107,7 +107,7 @@ delete_nums_in_str endp
 start:
     mov ax, @data
     mov ds, ax
-	mov es, ax
+    mov es, ax
 	
     print request_for_input        
     scan_str_ input
