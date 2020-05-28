@@ -4,7 +4,6 @@
     request_for_input db "enter your string:",0Ah,0Dh,'$'                         
     your_string db "your string:",0Ah,0Dh,'$'    
     after_deleting db "after deleting:",0Ah,0Dh,'$'    
-    err_msg db "error",0Ah,0Dh,'$'    
     max_size equ db 200    
 	input max_size        ; str_size
           db ?            ; str_len  
